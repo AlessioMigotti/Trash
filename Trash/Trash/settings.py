@@ -32,7 +32,7 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     'trasher',
-    'client'
+    'client',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
