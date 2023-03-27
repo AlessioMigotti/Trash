@@ -1,5 +1,7 @@
-from django.shortcuts import render
+import json
+from django.shortcuts import render, redirect
 from django.views import View
+from django.core.mail import send_mail
 from .models import MenuItem, Category, OrderModel
 # Create your views here.
 
@@ -70,13 +72,54 @@ class Order(View):
             city=city,
             state=state,
             zip_code=zip_code
-            )
-            
+        )
+
         order.items.add(*item_ids)
+
+        # Send confirmation email
+        body = ('Thank you for your order! Your trash will be moving soon. \n '
+                f'Your total: {price}\n'
+                'Thank you again for your order!')
+
+        send_mail(
+            'Thank You For Your Order!',
+            body,
+            'example@example.com',
+            [email],
+            fail_silently=False
+        )
 
         context = {
             'items': order_items['items'],
             'price': price
         }
+        return redirect('order-confirmation', pk=order.pk)
+
+
+class OrderConfirmation(View):
+    def get(self, request, pk, *args, **kwargs):
+        order = OrderModel.objects.get(pk=pk)
+
+        context = {
+            'pk': order.pk,
+            'items': order.items,
+            'price': order.price,
+        }
+
 
         return render(request, 'client/order_confirmation.html', context)
+
+    def post(self, request, pk, *args, **kwargs):
+        data = json.loads(request.body)
+
+        if data['isPaid']:
+            order = OrderModel.objects.et(pk=pk)
+            order.is_paid = True
+            order.save()
+            
+        return redirect('payment_confirmation.html')
+
+class OrderPayConfirmation(View):
+    def get(self, request, pk, *args, **kwargs):
+        return render(request, 'client/order_pay_confirmation.html')
+
